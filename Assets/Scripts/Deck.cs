@@ -327,13 +327,52 @@ public class Deck : MonoBehaviour
         /*TODO: 
          * Si estamos en la mano inicial, debemos voltear la primera carta del dealer.
          */
-
+        dealer.GetComponent<CardHand>().InitialToggle();
+        puntosDealer.text = "Puntos:\n" + dealer.GetComponent<CardHand>().points;
         /*TODO:
          * Repartimos cartas al dealer si tiene 16 puntos o menos
          * El dealer se planta al obtener 17 puntos o más
          * Mostramos el mensaje del que ha ganado
-         */                
-         
+         */
+        if (dealer.GetComponent<CardHand>().points <= 16)
+        {
+            PushDealer(true);
+        }
+        if (dealer.GetComponent<CardHand>().points == 21 ||
+            dealer.GetComponent<CardHand>().points > player.GetComponent<CardHand>().points)
+        {
+            finalMessage.text = "HAS PERDIDO";
+            hitButton.interactable = false;
+            stickButton.interactable = false;
+            playText.text = "Play";
+            RecibirApuesta("derrota");
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
+        if (dealer.GetComponent<CardHand>().points > 21 ||
+            player.GetComponent<CardHand>().points > dealer.GetComponent<CardHand>().points)
+        {
+            finalMessage.text = "HAS GANADO";
+            hitButton.interactable = false;
+            stickButton.interactable = false;
+            playText.text = "Play";
+            RecibirApuesta("victoria");
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
+        if (player.GetComponent<CardHand>().points == dealer.GetComponent<CardHand>().points)
+        {
+            finalMessage.text = "HAS EMPATADO";
+            hitButton.interactable = false;
+            stickButton.interactable = false;
+            playText.text = "Play";
+            RecibirApuesta("empate");
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
     }
 
     public void PlayAgain()
