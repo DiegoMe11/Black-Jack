@@ -60,7 +60,23 @@ public class Deck : MonoBehaviour
          * Barajar las cartas aleatoriamente.
          * El método Random.Range(0,n), devuelve un valor entre 0 y n-1
          * Si lo necesitas, puedes definir nuevos arrays.
-         */       
+         */
+
+        //Baraja las cartas
+        for (int n = 0; n < values.Length; n++)
+        {
+            int random = Random.Range(0, 52);
+            Sprite caraRandom = faces[random];
+            int valorRandom = values[random];
+
+            //Intercambia la posicion actual del bucle al random
+            values[random] = values[n];
+            faces[random] = faces[n];
+
+            //Intercambia el random a la posicion actual del bucle
+            values[n] = valorRandom;
+            faces[n] = caraRandom;
+        }
     }
 
     void StartGame()
