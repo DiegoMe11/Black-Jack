@@ -1,19 +1,20 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CardHand : MonoBehaviour
 {
     public List<GameObject> cards = new List<GameObject>();
     public GameObject card;
-    public bool isDealer = false;
+    public bool isPlayer = false;
     public int points;
-    private int coordY;    
-     
+    private int coordY;
+
     private void Awake()
     {
         points = 0;
         //Definimos dónde posicionamos las cartas de cada uno
-        if (!isDealer)
+        if (!isPlayer)
             coordY = 3;
         else
             coordY = -1;
@@ -22,7 +23,7 @@ public class CardHand : MonoBehaviour
     public void Clear()
     {
         points = 0;
-        if (!isDealer)
+        if (!isPlayer)
             coordY = 3;
         else
             coordY = -1;
@@ -30,15 +31,15 @@ public class CardHand : MonoBehaviour
         {
             Destroy(g);
         }
-        cards.Clear();                        
-    }        
+        cards.Clear();
+    }
 
     public void InitialToggle()
     {
-        cards[0].GetComponent<CardModel>().ToggleFace(true);              
+        cards[0].GetComponent<CardModel>().ToggleFace(true);
     }
 
-    public void Push(Sprite front, int value)
+    public void Push(Sprite front, int value, Text textoPuntos, bool visible)
     {
         //Creamos una carta y la añadimos a nuestra mano
         GameObject cardCopy = (GameObject)Instantiate(card);
@@ -46,24 +47,41 @@ public class CardHand : MonoBehaviour
 
         //La posicionamos en el tablero 
         float coordX = (float)1.4 * (float)(cards.Count - 4);
-        Vector3 pos = new Vector3(coordX, coordY);               
+        Vector3 pos = new Vector3(coordX, coordY);
         cardCopy.transform.position = pos;
 
         //Le ponemos la imagen y el valor asignado
         cardCopy.GetComponent<CardModel>().front = front;
         cardCopy.GetComponent<CardModel>().value = value;
-        
+
         //La cubrimos si es la primera del dealer
-        if (isDealer && cards.Count <= 1)
+        if (isPlayer == false && cards.Count <= 1)
+        {
             cardCopy.GetComponent<CardModel>().ToggleFace(false);
+        }
         else
+        {
             cardCopy.GetComponent<CardModel>().ToggleFace(true);
+        }
+
+        if (value == 10)
+        {
+            if (isPlayer == true)
+            {
+                cardCopy.GetComponentInChildren<MeshRenderer>().enabled = true;
+            }
+            if (isPlayer == false && cards.Count > 1)
+            {
+                cardCopy.GetComponentInChildren<MeshRenderer>().enabled = true;
+            }
+            //cardCopy.GetComponentInChildren<MeshRenderer>().enabled = true;
+        }
 
         //Calculamos la puntuación de nuestra mano
         int val = 0;
         int aces = 0;
         foreach (GameObject f in cards)
-        {            
+        {
 
             if (f.GetComponent<CardModel>().value != 11)
                 val += f.GetComponent<CardModel>().value;
@@ -84,8 +102,14 @@ public class CardHand : MonoBehaviour
         }
 
         points = val;
-       
+        if (visible == true)
+        {
+            textoPuntos.text = "Puntos:\n" + points;
+        }
+        else
+        {
+            textoPuntos.text = "Puntos:";
+        }
     }
-     
 
 }

@@ -9,12 +9,22 @@ public class Deck : MonoBehaviour
     public Button hitButton;
     public Button stickButton;
     public Button playAgainButton;
+    public Dropdown creditsButtn;
+    public Text playText;
     public Text finalMessage;
     public Text probMessage;
+    public Text prob21;
+    public Text prob17_21;
+    public Text puntosPlayer;
+    public Text puntosDealer;
+    public Text textoCreditos;
+
+    public int credits = 1000;
+    public int apuesta = 0;
 
     public int[] values = new int[52];
-    int cardIndex = 0;    
-       
+    int cardIndex = 0;
+
     private void Awake()
     {    
         InitCardValues();        
@@ -81,13 +91,50 @@ public class Deck : MonoBehaviour
 
     void StartGame()
     {
-        for (int i = 0; i < 2; i++)
+        apuesta = 0;
+        Apostar();
+        creditsButtn.interactable = false;
+        PushDealer(false);
+        PushPlayer(false);
+        PushDealer(false);
+        PushPlayer(true);
+
+        playAgainButton.interactable = false;
+        /*TODO:
+            * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
+        */
+
+        if (player.GetComponent<CardHand>().points == 21)
         {
-            PushPlayer();
-            PushDealer();
-            /*TODO:
-             * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
-             */
+            finalMessage.text = "HAS GANADO";
+            hitButton.interactable = false;
+            stickButton.interactable = false;
+            playText.text = "Play";
+            RecibirApuesta("victoria");
+            dealer.GetComponent<CardHand>().InitialToggle();
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
+        else if (dealer.GetComponent<CardHand>().points == 21)
+        {
+            finalMessage.text = "HAS PERDIDO";
+            playText.text = "Play";
+            RecibirApuesta("derrota");
+            dealer.GetComponent<CardHand>().InitialToggle();
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
+        else if (player.GetComponent<CardHand>().points > 21)
+        {
+            finalMessage.text = "HAS PERDIDO";
+            playText.text = "Play";
+            RecibirApuesta("derrota");
+            dealer.GetComponent<CardHand>().InitialToggle();
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
         }
     }
 
@@ -99,26 +146,131 @@ public class Deck : MonoBehaviour
          * - Probabilidad de que el jugador obtenga entre un 17 y un 21 si pide una carta
          * - Probabilidad de que el jugador obtenga más de 21 si pide una carta          
          */
+
+        int dealerPuntos = dealer.GetComponent<CardHand>().cards[1].GetComponent<CardModel>().value; //Los puntos del dealer sin la carta oculta
+        int playerPuntos = player.GetComponent<CardHand>().points;
+
+        int diferencia = Mathf.Abs(dealerPuntos - playerPuntos);
+        int contador = 0;
+
+        if (diferencia < 11) //Si la diferencia es mayor a 11 no existe carta para superar al jugador
+        {
+            for (int i = diferencia + 1; i <= 13; i++) //Sacar el numero de cartas posible que superan al jugador
+            {
+                contador++;
+            }
+            if (11 + dealer.GetComponent<CardHand>().cards[1].GetComponent<CardModel>().value < 21) //Para que el as cuente como 11
+            {
+                contador++;
+            }
+            if (11 + dealer.GetComponent<CardHand>().cards[1].GetComponent<CardModel>().value > 21 &&
+                1 + dealer.GetComponent<CardHand>().cards[1].GetComponent<CardModel>().value > playerPuntos) //Para que el as cuente como 1
+            {
+                contador++;
+            }
+            contador = contador * 4; //Como hay 4 palos se multiplica por 4
+
+            for (int i = diferencia + 1; i <= 11; i++) //Resta a las posibles cartas que superan las que ya estan visibles
+            {
+                for (int j = 1; j < dealer.GetComponent<CardHand>().cards.Count; j++) //Comprueba las del dealer
+                {
+                    if (dealer.GetComponent<CardHand>().cards[j].GetComponent<CardModel>().value == i + 1) //Si son iguales
+                    {
+                        contador--;
+                    }
+                }
+
+                for (int j = 0; j < player.GetComponent<CardHand>().cards.Count; j++) //Comprueba las del player
+                {
+                    if (player.GetComponent<CardHand>().cards[j].GetComponent<CardModel>().value == i + 1) //Si son iguales
+                    {
+                        if (i + 1 == 11)
+                        { //As
+                            if (1 + dealerPuntos > playerPuntos)
+                            {
+                                contador--;
+                            }
+                        }
+                        else //El resto
+                        {
+                            contador--;
+                        }
+                    }
+                }
+            }
+        }
+
+        float cartasEnLaMesa = (float)dealer.GetComponent<CardHand>().cards.Count + (float)player.GetComponent<CardHand>().cards.Count;
+        float cartasDisponibles = (float)values.Length - cartasEnLaMesa;
+        float probabilidad = (float)contador / cartasDisponibles;
+
+        if (probabilidad > 1) //Si se pasa la probabilidad es 1
+        {
+            probabilidad = 1;
+        }
+
+        //Probabilidad de que el jugador obtenga entre un 17 y un 21 si pide una carta
+        int contador21 = 0;
+        int contador17_21 = 0;
+        for (int i = 1; i <= 13; i++) //Para ver las 13 posibles cartas
+        {
+            int sumaPuntos = playerPuntos;
+            if (i == 1 && playerPuntos <= 10) //As 11
+            {
+                sumaPuntos = sumaPuntos + 11;
+            }
+            else if (i == 1 && playerPuntos > 10) //As 1
+            {
+                sumaPuntos = sumaPuntos + 1;
+            }
+
+            if (i > 1 && i < 11) //Entre 2 y 10 contandolos
+            {
+                sumaPuntos = sumaPuntos + i;
+            }
+            if (i > 1 && i >= 11) //Los que valen 11
+            {
+                sumaPuntos = sumaPuntos + 10;
+            }
+
+            if (sumaPuntos > 21)
+            {
+                contador21++;
+            }
+
+            if (sumaPuntos >= 17 && sumaPuntos <= 21)
+            {
+                contador17_21++;
+            }
+        }
+
+        probMessage.text = "Deal > Play:   " + probabilidad;
+        prob17_21.text = "17<=X<=21:   " + (float)contador17_21 / 13;
+        prob21.text = "X > 21:   " + (float)contador21 / 13;
     }
 
-    void PushDealer()
+    void PushDealer(bool visible)
     {
         /*TODO:
          * Dependiendo de cómo se implemente ShuffleCards, es posible que haya que cambiar el índice.
-         */
-        dealer.GetComponent<CardHand>().Push(faces[cardIndex],values[cardIndex]);
-        cardIndex++;        
-    }
-
-    void PushPlayer()
-    {
-        /*TODO:
-         * Dependiendo de cómo se implemente ShuffleCards, es posible que haya que cambiar el índice.
-         */
-        player.GetComponent<CardHand>().Push(faces[cardIndex], values[cardIndex]/*,cardCopy*/);
+        */
+        dealer.GetComponent<CardHand>().Push(faces[cardIndex], values[cardIndex], puntosDealer, visible);
         cardIndex++;
-        CalculateProbabilities();
-    }       
+    }
+
+    void PushPlayer(bool calcular)
+    {
+        /*TODO:
+         * Dependiendo de cómo se implemente ShuffleCards, es posible que haya que cambiar el índice.
+        */
+        player.GetComponent<CardHand>().Push(faces[cardIndex], values[cardIndex], puntosPlayer, true/*,cardCopy*/);
+        cardIndex++;
+
+        if (calcular == true)
+        {
+            CalculateProbabilities();
+        }
+    }
 
     public void Hit()
     {
@@ -127,7 +279,7 @@ public class Deck : MonoBehaviour
          */
         
         //Repartimos carta al jugador
-        PushPlayer();
+        PushPlayer(true);
 
         /*TODO:
          * Comprobamos si el jugador ya ha perdido y mostramos mensaje
@@ -160,5 +312,114 @@ public class Deck : MonoBehaviour
         ShuffleCards();
         StartGame();
     }
-    
+
+    public void Apostar()
+    {
+        switch (creditsButtn.value)
+        {
+            case 0:
+                credits = credits + apuesta;
+                credits = credits - 10;
+                apuesta = 10;
+                textoCreditos.text = "Creditos:\n" + credits;
+                break;
+            case 1:
+                credits = credits + apuesta;
+                credits = credits - 20;
+                apuesta = 20;
+                textoCreditos.text = "Creditos:\n" + credits;
+                break;
+            case 2:
+                credits = credits + apuesta;
+                credits = credits - 50;
+                apuesta = 50;
+                textoCreditos.text = "Creditos:\n" + credits;
+                break;
+            case 3:
+                credits = credits + apuesta;
+                credits = credits - 100;
+                apuesta = 100;
+                textoCreditos.text = "Creditos:\n" + credits;
+                break;
+        }
+    }
+
+    public void RecibirApuesta(string estado)
+    {
+        if (estado.Equals("empate"))
+        {
+            credits = credits + apuesta;
+        }
+        else if (estado.Equals("victoria"))
+        {
+            credits = credits + (apuesta * 2);
+        }
+        textoCreditos.text = "Creditos:\n" + credits;
+        apuesta = 0;
+        creditsButtn.interactable = true;
+
+        if (credits < 100)
+        {
+            creditsButtn.value = 2;
+        }
+        if (credits < 50)
+        {
+            creditsButtn.value = 1;
+        }
+        if (credits < 20)
+        {
+            creditsButtn.value = 1;
+        }
+        if (credits < 10)
+        {
+            playAgainButton.interactable = false;
+        }
+    }
+
+    public void Desactivar()
+    {
+        switch (creditsButtn.value)
+        {
+            case 0:
+                if (credits < 10)
+                {
+                    playAgainButton.interactable = false;
+                }
+                else
+                {
+                    playAgainButton.interactable = true;
+                }
+                break;
+            case 1:
+                if (credits < 20)
+                {
+                    playAgainButton.interactable = false;
+                }
+                else
+                {
+                    playAgainButton.interactable = true;
+                }
+                break;
+            case 2:
+                if (credits < 50)
+                {
+                    playAgainButton.interactable = false;
+                }
+                else
+                {
+                    playAgainButton.interactable = true;
+                }
+                break;
+            case 3:
+                if (credits < 100)
+                {
+                    playAgainButton.interactable = false;
+                }
+                else
+                {
+                    playAgainButton.interactable = true;
+                }
+                break;
+        }
+    }
 }
