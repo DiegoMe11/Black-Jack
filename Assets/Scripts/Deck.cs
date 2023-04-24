@@ -276,15 +276,50 @@ public class Deck : MonoBehaviour
     {
         /*TODO: 
          * Si estamos en la mano inicial, debemos voltear la primera carta del dealer.
-         */
-        
+        */
+
         //Repartimos carta al jugador
         PushPlayer(true);
 
         /*TODO:
          * Comprobamos si el jugador ya ha perdido y mostramos mensaje
-         */      
-
+        */
+        if (player.GetComponent<CardHand>().points == 21)
+        {
+            finalMessage.text = "HAS GANADO";
+            hitButton.interactable = false;
+            stickButton.interactable = false;
+            playText.text = "Play";
+            dealer.GetComponent<CardHand>().InitialToggle();
+            puntosDealer.text = "Puntos:\n" + dealer.GetComponent<CardHand>().points;
+            RecibirApuesta("victoria");
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
+        else if (dealer.GetComponent<CardHand>().points == 21)
+        {
+            finalMessage.text = "HAS PERDIDO";
+            playText.text = "Play";
+            dealer.GetComponent<CardHand>().InitialToggle();
+            puntosDealer.text = "Puntos:\n" + dealer.GetComponent<CardHand>().points;
+            RecibirApuesta("derrota");
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
+        else if (player.GetComponent<CardHand>().points > 21)
+        {
+            finalMessage.text = "HAS PERDIDO";
+            playText.text = "Play";
+            dealer.GetComponent<CardHand>().InitialToggle();
+            puntosDealer.text = "Puntos:\n" + dealer.GetComponent<CardHand>().points;
+            RecibirApuesta("derrota");
+            playAgainButton.interactable = true;
+            stickButton.interactable = false;
+            hitButton.interactable = false;
+        }
+        CalculateProbabilities();
     }
 
     public void Stand()
